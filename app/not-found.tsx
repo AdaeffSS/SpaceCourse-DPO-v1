@@ -22,7 +22,7 @@ export default function NotFound() {
                     asChild
                     className="mt-6 h-11 rounded-xl px-5"
                 >
-                    <Link href="/programs">
+                    <Link href="/">
                         Вернуться к программам
                     </Link>
                 </Button>

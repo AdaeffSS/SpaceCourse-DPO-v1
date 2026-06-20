@@ -388,7 +388,7 @@ export function CoursePage() {
         <div className="space-y-8">
             <div>
                 <Button variant="ghost" asChild className="mb-4 h-11 rounded-xl px-3">
-                    <Link href="/programs">
+                    <Link href="/">
                         <ArrowLeft className="h-4 w-4" />
                         Назад к программам
                     </Link>

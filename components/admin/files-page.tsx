@@ -59,6 +59,19 @@ export function FilesPage() {
     const [selected, setSelected] =
         useState<SelectedMap>({});
 
+    const [deleteModalOpen, setDeleteModalOpen] =
+        useState(false);
+
+    const [deleteResult, setDeleteResult] = useState<{
+        deletedCount: number;
+        blockedFiles: {
+            id: string;
+            originalName: string;
+            lessonId: string;
+            lessonTitle: string;
+        }[];
+    } | null>(null);
+
     const fileInputRef =
         useRef<HTMLInputElement>(null);
 
@@ -113,21 +126,51 @@ export function FilesPage() {
         (id) => selected[id]
     );
 
+    const selectedFiles = files.filter(
+        (f) => selected[f.id]
+    );
+
+    const blockedSelectedCount =
+        selectedFiles.filter(
+            (f) => f.lessonsCount > 0
+        ).length;
+
     async function deleteSelected() {
-        if (!selectedIds.length) return;
+        if (!selectedIds.length) {
+            return;
+        }
 
         if (
             !confirm(
                 `Удалить ${selectedIds.length} файлов?`
             )
-        )
+        ) {
             return;
+        }
 
-        await api("/files", {
+        const result = await api<{
+            success: boolean;
+
+            deletedCount: number;
+
+            blockedCount: number;
+
+            blockedFiles: {
+                id: string;
+                originalName: string;
+                lessonId: string;
+                lessonTitle: string;
+            }[];
+        }>("/files", {
             method: "DELETE",
             body: JSON.stringify({
                 ids: selectedIds,
             }),
+        });
+
+        setDeleteResult({
+            deletedCount: result.deletedCount,
+            blockedFiles: result.blockedFiles,
         });
 
         await loadFiles();
@@ -221,14 +264,73 @@ export function FilesPage() {
                 </h1>
 
                 {selectedIds.length > 0 && (
-                    <Button
-                        variant="destructive"
-                        onClick={deleteSelected}
-                    >
-                        Удалить ({selectedIds.length})
-                    </Button>
+                    <div className="text-right">
+                        <Button
+                            variant="destructive"
+                            onClick={deleteSelected}
+                        >
+                            Удалить ({selectedIds.length})
+                        </Button>
+
+                        {blockedSelectedCount > 0 && (
+                            <div className="mt-1 text-xs text-amber-600">
+                                {blockedSelectedCount} файлов используются в уроках
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
+
+            {deleteResult && (
+                <div
+                    className="
+            rounded-xl
+            border
+            border-zinc-200
+            bg-white
+            p-4
+        "
+                >
+                    <div className="font-medium">
+                        Удалено файлов: {deleteResult.deletedCount}
+                    </div>
+
+                    {deleteResult.blockedFiles.length > 0 && (
+                        <>
+                            <div className="mt-3 font-medium text-amber-700">
+                                Не удалось удалить:
+                            </div>
+
+                            <div className="mt-2 space-y-2">
+                                {deleteResult.blockedFiles.map(
+                                    (file) => (
+                                        <div
+                                            key={file.id}
+                                            className="
+                                    rounded-lg
+                                    border
+                                    border-amber-200
+                                    bg-amber-50
+                                    p-3
+                                "
+                                        >
+                                            <div className="font-medium">
+                                                {file.originalName}
+                                            </div>
+
+                                            <div className="text-sm text-zinc-600">
+                                                Используется в уроке:
+                                                {" "}
+                                                {file.lessonTitle}
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* DROPZONE */}
             <div

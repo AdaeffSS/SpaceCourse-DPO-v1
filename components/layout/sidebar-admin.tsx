@@ -37,7 +37,7 @@ const menuItems = [
     title: "Файлы",
     href: "/admin/files",
     icon: Files,
-  },
+  }
 ];
 
 export function SidebarAdmin() {

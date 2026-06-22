@@ -1,4 +1,4 @@
-import { ModulePage } from "@/components/admin/module-page";
+import { ModulePage } from "@/components/admin/modules/module-page";
 
 export default async function Page({
   params,

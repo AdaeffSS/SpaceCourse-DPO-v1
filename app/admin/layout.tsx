@@ -10,7 +10,7 @@ export default function CabinetLayout({
     return (
         <div className="bg-zinc-50">
             <div className="flex">
-                <aside className="fixed left-0 top-0 h-screen w-72 border-r border-zinc-200 bg-white">
+                <aside className="fixed left-0 z-50 top-0 h-screen w-72 border-r border-zinc-200 bg-white">
                     <SidebarAdmin />
                 </aside>
 

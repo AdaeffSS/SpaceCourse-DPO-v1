@@ -15,7 +15,7 @@ export function BaseSidebar({
         switchLink?.icon;
 
     return (
-        <aside className="flex h-screen w-72 flex-col border-r border-zinc-200 bg-white">
+        <aside className="fixed left-0 top-0 z-[9999] flex h-screen w-72 flex-col border-r border-zinc-200 bg-white">
             <div className="border-b border-zinc-200 p-6">
                 <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-600 text-white">

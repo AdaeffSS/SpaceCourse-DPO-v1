@@ -201,7 +201,7 @@ export function PlanPage({
 
             <div className="rounded-3xl border border-zinc-200 bg-white p-8">
                 <h2 className="text-xl font-semibold text-zinc-950">
-                    Программы плана
+                    Курсы плана
                 </h2>
 
                 <div className="mt-6 space-y-3">

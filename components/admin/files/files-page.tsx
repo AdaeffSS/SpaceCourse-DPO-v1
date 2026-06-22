@@ -9,9 +9,15 @@ import { api } from "@/lib/api";
 import { FileItem } from "@/types/file";
 
 import { FilesDropzone } from "./files-dropzone";
-import { FilesTable } from "./files-table";
 
-type SelectedMap = Record<string, boolean>;
+import { SearchResult } from "@/types/api/search-result";
+
+import { SearchInput } from "@/components/shared/search-input/search-input";
+import { EntityBrowserPagination } from "@/components/shared/entity-browser/entity-browser-pagination";
+
+import { FilesEntityList } from "./files-entity-list";
+import {Button} from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 
 export function FilesPage() {
   const [files, setFiles] = useState<FileItem[]>([]);
@@ -22,14 +28,32 @@ export function FilesPage() {
 
   const [uploadProgress, setUploadProgress] = useState("");
 
-  const [search, setSearch] = useState("");
 
-  const debouncedSearch = useDebounce(
-      search,
-      500,
-  );
+  const [search, setSearch] =
+      useState("");
 
-  const [selected, setSelected] = useState<SelectedMap>({});
+  const [page, setPage] =
+      useState(1);
+
+  const [total, setTotal] =
+      useState(0);
+
+  const [totalPages, setTotalPages] =
+      useState(1);
+
+  const [selectedIds, setSelectedIds] =
+      useState<string[]>([]);
+
+  const [sortField, setSortField] =
+      useState<keyof FileItem>(
+          "createdAt",
+      );
+
+  const [sortOrder, setSortOrder] =
+      useState<"asc" | "desc">(
+          "desc",
+      );
+
 
   const [deleteResult, setDeleteResult] = useState<{
     deletedCount: number;
@@ -44,54 +68,74 @@ export function FilesPage() {
 
   useEffect(() => {
     loadFiles();
-  }, [debouncedSearch]);
+  }, [
+    page,
+    search,
+    sortField,
+    sortOrder,
+  ]);
 
   async function loadFiles() {
     try {
       setLoading(true);
 
-      const params = new URLSearchParams();
+      const result =
+          await api<
+              SearchResult<FileItem>
+          >("/files/search", {
+            method: "POST",
 
-      if (debouncedSearch) {
-        params.append(
-            "search",
-            debouncedSearch,
-        );
-      }
+            body: JSON.stringify({
+              page,
+              pageSize: 20,
 
-      const data = await api<FileItem[]>(`/files?${params.toString()}`);
+              search,
 
-      setFiles(data);
-      setSelected({});
+              sortField,
+              sortOrder,
+            }),
+          });
+
+      setFiles(result.items);
+
+      setTotal(
+          result.meta.total,
+      );
+
+      setTotalPages(
+          result.meta.totalPages,
+      );
+
+      setSelectedIds([]);
     } finally {
       setLoading(false);
     }
   }
 
-  function toggleSelect(id: string) {
-    setSelected((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const selectedFiles =
+      files.filter((file) =>
+          selectedIds.includes(file.id),
+      );
+
+  function toggleSort(
+      field: keyof FileItem,
+  ) {
+    setPage(1);
+
+    if (sortField === field) {
+      setSortOrder(
+          sortOrder === "asc"
+              ? "desc"
+              : "asc",
+      );
+
+      return;
+    }
+
+    setSortField(field);
+
+    setSortOrder("desc");
   }
-
-  function selectAll() {
-    const map: SelectedMap = {};
-
-    files.forEach((file) => {
-      map[file.id] = true;
-    });
-
-    setSelected(map);
-  }
-
-  function clearSelection() {
-    setSelected({});
-  }
-
-  const selectedIds = Object.keys(selected).filter((id) => selected[id]);
-
-  const selectedFiles = files.filter((file) => selected[file.id]);
 
   const deletableSelectedCount = selectedFiles.filter(
       (file) => file.lessonsCount === 0,
@@ -274,20 +318,80 @@ export function FilesPage() {
             onUpload={uploadFiles}
         />
 
-        <FilesTable
+        <SearchInput
+            placeholder="Поиск файлов..."
+            onChange={(value) => {
+              setPage(1);
+              setSearch(value);
+            }}
+        />
+
+        <div
+            className="
+    flex
+    items-center
+    justify-between
+    gap-4
+  "
+        >
+          <div
+              className="
+      flex
+      items-center
+      gap-2
+      text-sm
+    "
+          >
+    <span>
+      Всего файлов:{" "}
+      <strong>{total}</strong>
+    </span>
+
+            {selectedIds.length > 0 && (
+                <>
+        <span className="text-zinc-400">
+          •
+        </span>
+
+                  <span className="text-blue-600">
+          Выбрано:{" "}
+                    <strong>
+            {selectedIds.length}
+          </strong>
+        </span>
+                </>
+            )}
+          </div>
+
+          {selectedIds.length > 0 && (
+              <Button
+                  variant="destructive"
+                  onClick={deleteSelected}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Удалить выбранные
+              </Button>
+          )}
+        </div>
+
+        <FilesEntityList
             files={files}
             loading={loading}
-            search={search}
-            onSearchChange={setSearch}
-            selected={selected}
-            onSelect={toggleSelect}
-            onSelectAll={selectAll}
-            onClearSelection={clearSelection}
-            onDeleteSelected={deleteSelected}
-            blockedSelectedCount={blockedSelectedCount}
-            deletableSelectedCount={deletableSelectedCount}
+            selectedIds={selectedIds}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSelectionChange={
+              setSelectedIds
+            }
+            onSort={toggleSort}
             onDownload={downloadFile}
             onDelete={deleteOne}
+        />
+
+        <EntityBrowserPagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
         />
       </div>
   );

@@ -23,6 +23,7 @@ function Checkbox({
           justify-center
           rounded-md
           border
+          cursor-pointer
           border-zinc-300
           bg-white
           transition-colors

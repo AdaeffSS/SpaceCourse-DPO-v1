@@ -11,7 +11,7 @@ import { useAuth } from "@/providers/auth-provider";
 
 const menuItems = [
     {
-        title: "Программы",
+        title: "Курсы",
         href: "/",
         icon: GraduationCap,
     },

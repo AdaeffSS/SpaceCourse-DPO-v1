@@ -1,4 +1,4 @@
-import { CourseModulesPage } from "@/components/admin/course-modules-page";
+import { CourseModulesPage } from "@/components/admin/courses/course-modules-page";
 
 export default async function Page({
   params,

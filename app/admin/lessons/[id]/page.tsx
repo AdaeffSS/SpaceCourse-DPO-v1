@@ -1,4 +1,4 @@
-import { LessonPage } from "@/components/admin/lesson-page";
+import { LessonPage } from "@/components/admin/lessons/lesson-page";
 
 type Props = {
   params: Promise<{

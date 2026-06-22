@@ -20,6 +20,11 @@ export type LessonDetails = {
 
         title: string;
 
+        status:
+            | "DRAFT"
+            | "ACTIVE"
+            | "INACTIVE";
+
         order: number;
     }[];
 

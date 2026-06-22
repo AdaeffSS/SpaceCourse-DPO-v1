@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Search } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/use-debounce";
 
 import { api } from "@/lib/api";
 
@@ -26,6 +24,11 @@ export function FilesPage() {
 
   const [search, setSearch] = useState("");
 
+  const debouncedSearch = useDebounce(
+      search,
+      500,
+  );
+
   const [selected, setSelected] = useState<SelectedMap>({});
 
   const [deleteResult, setDeleteResult] = useState<{
@@ -41,7 +44,7 @@ export function FilesPage() {
 
   useEffect(() => {
     loadFiles();
-  }, [search]);
+  }, [debouncedSearch]);
 
   async function loadFiles() {
     try {
@@ -49,8 +52,11 @@ export function FilesPage() {
 
       const params = new URLSearchParams();
 
-      if (search) {
-        params.append("search", search);
+      if (debouncedSearch) {
+        params.append(
+            "search",
+            debouncedSearch,
+        );
       }
 
       const data = await api<FileItem[]>(`/files?${params.toString()}`);
@@ -87,8 +93,12 @@ export function FilesPage() {
 
   const selectedFiles = files.filter((file) => selected[file.id]);
 
+  const deletableSelectedCount = selectedFiles.filter(
+      (file) => file.lessonsCount === 0,
+  ).length;
+
   const blockedSelectedCount = selectedFiles.filter(
-    (file) => file.lessonsCount > 0,
+      (file) => file.lessonsCount > 0,
   ).length;
 
   async function deleteSelected() {
@@ -202,105 +212,83 @@ export function FilesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <h1 className="text-4xl font-semibold">Файлы</h1>
-
-        {selectedIds.length > 0 && (
-          <div className="text-right">
-            <Button variant="destructive" onClick={deleteSelected}>
-              Удалить ({selectedIds.length})
-            </Button>
-
-            {blockedSelectedCount > 0 && (
-              <div className="mt-1 text-xs text-amber-600">
-                {blockedSelectedCount} файлов используются в уроках
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {deleteResult && (
-        <div
-          className="
-                        rounded-xl
-                        border
-                        border-zinc-200
-                        bg-white
-                        p-4
-                    "
-        >
-          <div className="font-medium">
-            Удалено файлов: {deleteResult.deletedCount}
-          </div>
-
-          {deleteResult.blockedFiles.length > 0 && (
-            <>
-              <div className="mt-3 font-medium text-amber-700">
-                Не удалось удалить:
-              </div>
-
-              <div className="mt-2 space-y-2">
-                {deleteResult.blockedFiles.map((file) => (
-                  <div
-                    key={file.id}
-                    className="
-                                                rounded-lg
-                                                border
-                                                border-amber-200
-                                                bg-amber-50
-                                                p-3
-                                            "
-                  >
-                    <div className="font-medium">{file.originalName}</div>
-
-                    <div className="text-sm text-zinc-600">
-                      Используется в уроке: {file.lessonTitle}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <h1 className="text-4xl font-semibold">
+            Файлы
+          </h1>
         </div>
-      )}
 
-      <FilesDropzone
-        uploading={uploading}
-        progress={uploadProgress}
-        onUpload={uploadFiles}
-      />
+        {deleteResult && (
+            <div
+                className="
+          rounded-xl
+          border
+          border-zinc-200
+          bg-white
+          p-4
+        "
+            >
+              <div className="font-medium">
+                Удалено файлов: {deleteResult.deletedCount}
+              </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4" />
+              {deleteResult.blockedFiles.length > 0 && (
+                  <>
+                    <div className="mt-3 font-medium text-amber-700">
+                      Не удалось удалить:
+                    </div>
 
-        <input
-          className="
-                        h-11
-                        w-full
-                        rounded-xl
-                        border
-                        border-zinc-200
-                        pl-10
-                        pr-4
-                    "
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Поиск файлов"
+                    <div className="mt-2 space-y-2">
+                      {deleteResult.blockedFiles.map((file) => (
+                          <div
+                              key={file.id}
+                              className="
+                    rounded-lg
+                    border
+                    border-amber-200
+                    bg-amber-50
+                    p-3
+                  "
+                          >
+                            <div className="font-medium">
+                              {file.originalName}
+                            </div>
+
+                            <div className="text-sm text-zinc-600">
+                              Используется в уроке:
+                              {" "}
+                              {file.lessonTitle}
+                            </div>
+                          </div>
+                      ))}
+                    </div>
+                  </>
+              )}
+            </div>
+        )}
+
+        <FilesDropzone
+            uploading={uploading}
+            progress={uploadProgress}
+            onUpload={uploadFiles}
+        />
+
+        <FilesTable
+            files={files}
+            loading={loading}
+            search={search}
+            onSearchChange={setSearch}
+            selected={selected}
+            onSelect={toggleSelect}
+            onSelectAll={selectAll}
+            onClearSelection={clearSelection}
+            onDeleteSelected={deleteSelected}
+            blockedSelectedCount={blockedSelectedCount}
+            deletableSelectedCount={deletableSelectedCount}
+            onDownload={downloadFile}
+            onDelete={deleteOne}
         />
       </div>
-
-      <FilesTable
-        files={files}
-        loading={loading}
-        selected={selected}
-        onSelect={toggleSelect}
-        onSelectAll={selectAll}
-        onClearSelection={clearSelection}
-        onDownload={downloadFile}
-        onDelete={deleteOne}
-      />
-    </div>
   );
 }

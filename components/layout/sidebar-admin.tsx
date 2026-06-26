@@ -15,7 +15,7 @@ import { useAuth } from "@/providers/auth-provider";
 const menuItems = [
   {
     title: "Планы курсов",
-    href: "/admin/plans",
+    href: "/admin/course-plans",
     icon: FolderKanban,
   },
   {

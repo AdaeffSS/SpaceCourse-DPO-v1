@@ -13,7 +13,7 @@ export function PlanCard({
                          }: Props) {
     return (
         <Link
-            href={`/admin/plans/${plan.id}`}
+            href={`/admin/course-plans/${plan.id}`}
             className="
                 rounded-3xl
                 border border-zinc-200

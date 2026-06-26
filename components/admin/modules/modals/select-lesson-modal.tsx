@@ -70,7 +70,7 @@ export function SelectLessonModal({
 
       const data =
           await api<Lesson[]>(
-              `/lessons?${params.toString()}`
+              `/admin/lessons?${params.toString()}`
           );
 
       setLessons(data);

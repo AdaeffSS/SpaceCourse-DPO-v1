@@ -1,28 +1,29 @@
 export type CoursePlan = {
     id: string;
-
     price: number;
     hours: number;
     durationDays: number;
-
-    coursesCount: number;
-
+    type: "ATC" | "PRP";
+    coursesCount?: number;
+    enrollmentsCount?: number;
     createdAt: string;
     updatedAt: string;
 };
 
-export type CoursePlanDetails = {
+export type CoursePlanModuleHour = {
     id: string;
-
-    price: number;
-    hours: number;
-    durationDays: number;
-
-    courses: {
+    moduleId: string;
+    durationValue: number;
+    module: {
         id: string;
         title: string;
-    }[];
+    };
+};
 
-    createdAt: string;
-    updatedAt: string;
+export type CoursePlanRelationDetails = {
+    courseId: string;
+    planId: string;
+    testHours: number;
+    plan: CoursePlan;
+    moduleHours: CoursePlanModuleHour[];
 };

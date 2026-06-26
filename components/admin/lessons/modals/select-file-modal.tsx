@@ -1,152 +1,96 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
+import { useEffect, useState } from "react";
+import { X, FileText, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
 import { api } from "@/lib/api";
 
-import { FileItem } from "@/types/file";
+type FileItem = {
+    id: string;
+    originalName: string;
+    mimeType: string;
+    sizeBytes: number;
+};
 
 type Props = {
     open: boolean;
-
     onClose: () => void;
-
-    selectedIds: string[];
-
-    onSelect: (file: FileItem) => void;
+    onSelect: (fileId: string) => void;
 };
 
-export function SelectFileModal({
-                                    open,
-                                    onClose,
-                                    selectedIds,
-                                    onSelect,
-                                }: Props) {
+export function SelectFileModal({ open, onClose, onSelect }: Props) {
     const [files, setFiles] = useState<FileItem[]>([]);
-
+    const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
 
-    const [loading, setLoading] = useState(true);
-
     useEffect(() => {
-        if (!open) {
-            return;
+        if (open) {
+            loadFiles();
         }
-
-        loadFiles();
     }, [open]);
 
     async function loadFiles() {
         try {
             setLoading(true);
-
-            const data = await api<FileItem[]>("/files");
-
-            setFiles(data);
+            // Бэкенд теперь возвращает прямой массив документов
+            const data = await api<FileItem[]>("/admin/files");
+            setFiles(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Не удалось загрузить файлы", err);
+            setFiles([]);
         } finally {
             setLoading(false);
         }
     }
 
-    const filteredFiles = useMemo(() => {
-        return files.filter((file) =>
-            file.originalName
-                .toLowerCase()
-                .includes(search.toLowerCase()),
-        );
-    }, [files, search]);
+    if (!open) return null;
 
-    if (!open) {
-        return null;
-    }
+    const filteredFiles = files.filter(f => 
+        f.originalName.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-6">
-            <div className="flex max-h-[80vh] w-full max-w-4xl flex-col rounded-3xl bg-white">
-                <div className="border-b border-zinc-200 p-6">
-                    <h2 className="text-2xl font-semibold text-zinc-950">
-                        Добавление файлов
-                    </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-xl flex flex-col max-h-[80vh]">
+                <div className="flex items-center justify-between border-b pb-3">
+                    <h2 className="text-xl font-semibold text-zinc-950">Выбрать из существующих файлов</h2>
+                    <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl h-9 w-9">
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
 
-                    <p className="mt-2 text-sm text-zinc-600">
-                        Выберите файлы для прикрепления к уроку.
-                    </p>
-
+                <div className="mt-4">
                     <input
+                        type="text"
+                        placeholder="Поиск по названию файла..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Поиск файла..."
-                        className="
-              mt-4
-              h-11
-              w-full
-              rounded-xl
-              border border-zinc-200
-              px-4
-            "
+                        className="h-11 w-full rounded-xl border border-zinc-200 px-4 text-sm outline-none focus:border-zinc-900 transition-colors"
                     />
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto mt-4 space-y-2 pr-1">
                     {loading ? (
-                        <div>Загрузка...</div>
+                        <p className="text-sm text-zinc-500 text-center py-4">Загрузка библиотеки файлов...</p>
+                    ) : filteredFiles.length === 0 ? (
+                        <p className="text-sm text-zinc-400 text-center py-4">Файлы не найдены.</p>
                     ) : (
-                        <div className="space-y-4">
-                            {filteredFiles.map((file) => {
-                                const selected = selectedIds.includes(file.id);
-
-                                return (
-                                    <div
-                                        key={file.id}
-                                        className="
-                      rounded-2xl
-                      border
-                      border-zinc-200
-                      p-5
-                    "
-                                    >
-                                        <div className="flex items-center justify-between gap-4">
-                                            <div className="min-w-0">
-                                                <h3 className="truncate font-semibold text-zinc-950">
-                                                    {file.originalName}
-                                                </h3>
-
-                                                <p className="mt-1 text-sm text-zinc-500">
-                                                    {file.mimeType}
-                                                </p>
-                                            </div>
-
-                                            <Button
-                                                disabled={selected}
-                                                onClick={() => onSelect(file)}
-                                            >
-                                                {selected ? "Добавлен" : "Добавить"}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-
-                            {filteredFiles.length === 0 && (
-                                <div className="rounded-2xl border border-zinc-200 p-8 text-center text-zinc-500">
-                                    Ничего не найдено
+                        filteredFiles.map((file) => (
+                            <div
+                                key={file.id}
+                                onClick={() => { onSelect(file.id); onClose(); }}
+                                className="flex items-center justify-between p-3 border border-zinc-200 rounded-xl hover:bg-zinc-50 cursor-pointer transition-colors"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
+                                    <span className="text-sm font-medium text-zinc-900 truncate pr-2">{file.originalName}</span>
                                 </div>
-                            )}
-                        </div>
+                                <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold shrink-0">
+                                    {(file.sizeBytes / 1024 / 1024).toFixed(2)} MB
+                                </span>
+                            </div>
+                        ))
                     )}
-                </div>
-
-                <div className="border-t border-zinc-200 p-6">
-                    <div className="flex justify-end">
-                        <Button
-                            variant="outline"
-                            onClick={onClose}
-                        >
-                            Закрыть
-                        </Button>
-                    </div>
                 </div>
             </div>
         </div>

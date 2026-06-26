@@ -1,69 +1,52 @@
 "use client";
 
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-
-type Plan = {
-    id: string;
-    hours: number;
-    price: number;
-};
 
 type Props = {
     open: boolean;
     onClose: () => void;
     onCreated: () => Promise<void>;
-    plans: Plan[];
 };
 
 export function CreateCourseModal({
                                        open,
                                        onClose,
                                        onCreated,
-                                       plans,
                                    }: Props) {
-    const [title, setTitle] =
-        useState("");
-
-    const [description, setDescription] =
-        useState("");
-
-    const [planId, setPlanId] =
-        useState("");
-
-    const [type, setType] =
-        useState("ATC");
-
-    const [loading, setLoading] =
-        useState(false);
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [type, setType] = useState("ATC");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
 
     if (!open) {
         return null;
     }
 
-    async function handleSubmit(
-        e: React.FormEvent
-    ) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-
         setLoading(true);
+        setError("");
 
         try {
-            await api("/courses", {
+            await api("/admin/courses", {
                 method: "POST",
                 body: JSON.stringify({
                     title,
                     description,
                     type,
-                    planId,
                 }),
             });
 
             await onCreated();
-
+            setTitle("");
+            setDescription("");
+            setType("ATC");
             onClose();
+        } catch (err: any) {
+            setError(err.message || "Ошибка при создании курса");
         } finally {
             setLoading(false);
         }
@@ -71,7 +54,7 @@ export function CreateCourseModal({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-xl rounded-3xl bg-white p-8">
+            <div className="w-full max-w-xl rounded-3xl bg-white p-8 shadow-xl">
                 <h2 className="text-2xl font-semibold text-zinc-950">
                     Создать программу
                 </h2>
@@ -84,15 +67,11 @@ export function CreateCourseModal({
                         <label className="text-sm font-medium text-zinc-900">
                             Название
                         </label>
-
                         <input
                             value={title}
-                            onChange={(e) =>
-                                setTitle(
-                                    e.target.value
-                                )
-                            }
-                            className="mt-2 h-11 w-full rounded-xl border border-zinc-200 px-4"
+                            onChange={(e) => setTitle(e.target.value)}
+                            required
+                            className="mt-2 h-11 w-full rounded-xl border border-zinc-200 px-4 outline-none focus:border-zinc-900 transition"
                         />
                     </div>
 
@@ -100,76 +79,39 @@ export function CreateCourseModal({
                         <label className="text-sm font-medium text-zinc-900">
                             Описание
                         </label>
-
                         <textarea
                             value={description}
-                            onChange={(e) =>
-                                setDescription(
-                                    e.target.value
-                                )
-                            }
-                            className="mt-2 w-full rounded-xl border border-zinc-200 p-4"
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                            className="mt-2 w-full rounded-xl border border-zinc-200 p-4 outline-none focus:border-zinc-900 transition"
                         />
                     </div>
 
                     <div>
                         <label className="text-sm font-medium text-zinc-900">
-                            План
+                            Тип программы
                         </label>
-
-                        <select
-                            value={planId}
-                            onChange={(e) =>
-                                setPlanId(
-                                    e.target.value
-                                )
-                            }
-                            className="mt-2 h-11 w-full rounded-xl border border-zinc-200 px-4"
-                        >
-                            <option value="">
-                                Выберите план
-                            </option>
-
-                            {plans.map((plan) => (
-                                <option
-                                    key={plan.id}
-                                    value={plan.id}
-                                >
-                                    {plan.hours} ч. /{" "}
-                                    {plan.price} ₽
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium text-zinc-900">
-                            Тип
-                        </label>
-
                         <select
                             value={type}
-                            onChange={(e) =>
-                                setType(
-                                    e.target.value
-                                )
-                            }
-                            className="mt-2 h-11 w-full rounded-xl border border-zinc-200 px-4"
+                            onChange={(e) => setType(e.target.value)}
+                            className="mt-2 h-11 w-full rounded-xl border border-zinc-200 bg-white px-4 outline-none focus:border-zinc-900 transition"
                         >
-                            <option value="ATC">
-                                ATC
-                            </option>
-
-                            <option value="PRP">
-                                PRP
-                            </option>
+                            <option value="ATC">Повышение квалификации (ATC)</option>
+                            <option value="PRP">Профессиональная переподготовка (PRP)</option>
                         </select>
                     </div>
 
-                    <div className="flex gap-3">
+                    {error && (
+                        <div className="text-sm text-red-600">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
                         <Button
                             type="button"
                             variant="outline"
+                            className="rounded-xl h-11"
                             onClick={onClose}
                         >
                             Отмена
@@ -177,11 +119,10 @@ export function CreateCourseModal({
 
                         <Button
                             type="submit"
-                            disabled={loading}
+                            className="rounded-xl h-11"
+                            disabled={loading || !title.trim()}
                         >
-                            {loading
-                                ? "Создание..."
-                                : "Создать"}
+                            {loading ? "Создание..." : "Создать"}
                         </Button>
                     </div>
                 </form>

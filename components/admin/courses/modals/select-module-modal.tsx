@@ -63,12 +63,21 @@ export function SelectModuleModal({
         try {
             setLoading(true);
 
-            const data =
-                await api<ModuleItem[]>(
-                    "/modules"
-                );
+            // Запрашиваем первую страницу модулей (например, до 100 штук для выбора)
+            const data = await api<{ items: ModuleItem[] }>(
+                "/admin/modules/search",
+                {
+                    method: "POST",
+                    body: JSON.stringify({
+                        page: 1,
+                        pageSize: 100,
+                        sortField: "title",
+                        sortOrder: "asc"
+                    }),
+                }
+            );
 
-            setModules(data);
+            setModules(data.items);
         } finally {
             setLoading(false);
         }

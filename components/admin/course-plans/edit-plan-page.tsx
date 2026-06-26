@@ -19,7 +19,7 @@ export function EditPlanPage() {
         setLoading(true);
 
         try {
-            // TODO: PUT /course-plans/:id
+            // TODO: PUT /course-course-course-plans/:id
         } finally {
             setLoading(false);
         }

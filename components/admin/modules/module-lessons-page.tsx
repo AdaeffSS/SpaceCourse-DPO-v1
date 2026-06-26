@@ -54,11 +54,11 @@ export function ModuleLessonsPage({
                 lessonsData,
             ] = await Promise.all([
                 api<ModuleInfo>(
-                    `/modules/${id}`
+                    `/admin/modules/${id}`
                 ),
 
                 api<ModuleLesson[]>(
-                    `/modules/${id}/lessons`
+                    `/admin/modules/${id}/lessons`
                 ),
             ]);
 
@@ -121,7 +121,7 @@ export function ModuleLessonsPage({
             setSaving(true);
 
             await api(
-                `/modules/${id}/lessons`,
+                `/admin/modules/${id}/lessons`,
                 {
                     method: "PUT",
 
